@@ -1,0 +1,13 @@
+# IDE
+.claude/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Docs
+*.pdf
+
+# Spark project
+spark/

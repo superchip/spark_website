@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  /* Spark Orange Colors */
+  --color-spark-orange-50: #fff7ed;
+  --color-spark-orange-100: #ffedd5;
+  --color-spark-orange-200: #fed7aa;
+  --color-spark-orange-300: #fdba74;
+  --color-spark-orange-400: #fb923c;
+  --color-spark-orange-500: #f97316;
+  --color-spark-orange-600: #ea580c;
+  --color-spark-orange-700: #c2410c;
+  --color-spark-orange-800: #9a3412;
+  --color-spark-orange-900: #7c2d12;
+
+  /* Spark Amber Colors */
+  --color-spark-amber-50: #fffbeb;
+  --color-spark-amber-100: #fef3c7;
+  --color-spark-amber-200: #fde68a;
+  --color-spark-amber-300: #fcd34d;
+  --color-spark-amber-400: #fbbf24;
+  --color-spark-amber-500: #f59e0b;
+  --color-spark-amber-600: #d97706;
+  --color-spark-amber-700: #b45309;
+  --color-spark-amber-800: #92400e;
+  --color-spark-amber-900: #78350f;
+
+  /* Animation */
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
