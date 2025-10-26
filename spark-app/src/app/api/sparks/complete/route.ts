@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
     // Increment goal's spark count using the helper function
     const { error: incrementError } = await supabase.rpc('increment_goal_sparks', {
-      goal_id: goalId
+      goal_uuid: goalId
     })
 
     if (incrementError) {
