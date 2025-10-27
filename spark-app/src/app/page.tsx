@@ -92,53 +92,59 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto">
           {showForm ? (
             <div className="space-y-3 sm:space-y-4 md:space-y-6">
-              {/* Branding Badge - Smaller and more subtle */}
+              {/* Branding Badge - Vibrant and eye-catching */}
               <div className="text-center">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/70 rounded-full mb-2 sm:mb-3 md:mb-4 backdrop-blur-sm shadow-sm border border-spark-orange-100">
-                  <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-spark-orange-600" />
-                  <span className="text-xs font-semibold text-spark-orange-700 tracking-wide uppercase">Micro-Activation Platform</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-full mb-2 sm:mb-3 md:mb-4 backdrop-blur-md shadow-md border border-orange-200">
+                  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-spark-orange-600" />
+                  <span className="text-xs font-bold text-spark-orange-700 tracking-wide uppercase">Micro-Activation Platform</span>
                 </div>
 
-                {/* Hero Heading - Improved typography and spacing */}
+                {/* Hero Heading - Vibrant gradients */}
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold mb-2 sm:mb-3 md:mb-4 leading-tight px-2">
-                  <span className="bg-gradient-to-r from-spark-orange-600 via-spark-orange-500 to-spark-amber-600 bg-clip-text text-transparent">
-                    Ignite Your Potential,
+                  <span className="bg-gradient-to-r from-orange-600 via-red-500 to-amber-600 bg-clip-text text-transparent">
+                    Ignite Your Potential
                   </span>
                   <br />
                   <span className="text-gray-900">One Spark at a Time</span>
                 </h1>
 
-                {/* Subheading - Better contrast and spacing */}
-                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 mb-3 sm:mb-4 md:mb-6 max-w-2xl mx-auto leading-relaxed font-light px-2">
-                  Overcome procrastination with tiny <strong className="font-semibold text-gray-700">2-5 minute actions</strong>. No sign-up required!
+                {/* Subheading - Energetic and colorful */}
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-700 mb-3 sm:mb-4 md:mb-6 max-w-2xl mx-auto leading-relaxed font-medium px-2">
+                  Overcome procrastination with tiny <strong className="font-bold text-orange-600">2-5 minute actions</strong>.
+                  <span className="text-green-600 font-semibold"> No sign-up required!</span>
                 </p>
               </div>
 
-              {/* Spark Generation Form - Enhanced card with better shadow */}
-              <Card className="shadow-2xl hover:shadow-3xl transition-all duration-300 border-0 bg-white/95 backdrop-blur-sm">
-                <CardContent className="p-5 sm:p-6 md:p-8 lg:p-10">
+              {/* Spark Generation Form - Vibrant and modern */}
+              <Card className="shadow-2xl hover:shadow-orange-200/50 transition-all duration-300 border-2 border-orange-200 bg-white relative overflow-hidden">
+                {/* Subtle gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-50/30 via-transparent to-amber-50/30 pointer-events-none"></div>
+
+                <CardContent className="p-5 sm:p-6 md:p-8 lg:p-10 relative z-10">
                   <form onSubmit={handleGenerateSpark} className="space-y-3 sm:space-y-4 md:space-y-6">
-                    {/* Header with spark icon - Better alignment */}
-                    <div className="flex items-center gap-2 sm:gap-3 pb-1">
-                      <div className="p-2 sm:p-2.5 bg-gradient-to-br from-spark-orange-500 to-spark-amber-500 rounded-lg sm:rounded-xl shadow-lg">
+                    {/* Header with spark icon - Vibrant */}
+                    <div className="flex items-center gap-3 pb-1">
+                      <div className="p-2.5 bg-gradient-to-br from-orange-500 via-red-500 to-amber-500 rounded-xl shadow-lg">
                         <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
-                      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">What do you want to do?</h2>
+                      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">
+                        What do you want to do?
+                      </h2>
                     </div>
 
-                    {/* Info box - Softer, more modern design */}
-                    <div className="relative bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border-l-4 border-blue-500 rounded-r-xl sm:rounded-r-2xl p-3 sm:p-4 shadow-sm">
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <span className="text-lg sm:text-xl md:text-2xl flex-shrink-0 mt-0.5">✨</span>
-                        <p className="text-blue-900 text-sm sm:text-base leading-relaxed">
-                          <strong className="font-bold">Typing your goal is your first spark</strong> – the most important step!
+                    {/* Info box - Colorful gradient */}
+                    <div className="relative bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 border-l-4 border-indigo-500 rounded-r-xl p-4 sm:p-5 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl flex-shrink-0">✨</span>
+                        <p className="text-gray-800 text-sm sm:text-base leading-relaxed">
+                          <strong className="font-bold text-indigo-900">Typing your goal is your first spark</strong> – the most important step!
                         </p>
                       </div>
                     </div>
 
-                    {/* Goal input - Better spacing and prominence */}
+                    {/* Goal input - Vibrant focus state */}
                     <div>
-                      <label className="block text-sm sm:text-base font-bold text-gray-800 mb-2">
+                      <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
                         Your Goal
                       </label>
                       <input
@@ -147,48 +153,48 @@ export default function LandingPage() {
                         value={goalTitle}
                         onChange={(e) => setGoalTitle(e.target.value)}
                         autoFocus
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 text-base sm:text-lg font-medium border-3 border-gray-300 rounded-xl sm:rounded-2xl focus:border-spark-orange-500 focus:ring-4 focus:ring-spark-orange-200/50 transition-all duration-200 outline-none placeholder:text-gray-400 hover:border-gray-400 bg-white shadow-sm"
-                        style={{ borderWidth: '3px' }}
+                        className="w-full px-4 py-4 sm:px-5 sm:py-5 text-base sm:text-lg font-medium border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-200 transition-all duration-200 outline-none placeholder:text-gray-400 hover:border-orange-400 bg-white shadow-sm"
                       />
                     </div>
 
-                    {/* Action button - More prominent with better hover state */}
+                    {/* Action button - Vibrant and energetic */}
                     <div>
                       <button
                         type="submit"
                         disabled={isGenerating || !goalTitle.trim()}
-                        className="group relative w-full bg-gradient-to-r from-spark-orange-600 via-spark-orange-500 to-spark-amber-600 text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-5 md:py-6 px-6 sm:px-8 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 overflow-hidden"
+                        className="group relative w-full bg-gradient-to-r from-orange-600 via-red-500 to-amber-600 hover:from-orange-700 hover:via-red-600 hover:to-amber-700 text-white font-bold text-base sm:text-lg md:text-xl py-5 sm:py-6 md:py-7 px-6 sm:px-8 rounded-xl shadow-xl hover:shadow-2xl hover:shadow-orange-500/30 hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 overflow-hidden"
                       >
-                        {/* Shine effect */}
+                        {/* Enhanced shine effect */}
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
 
                         {isGenerating ? (
                           <>
                             <Spinner />
-                            <span className="text-sm sm:text-base md:text-lg lg:text-xl">Generating Your Spark...</span>
+                            <span>Generating Your Spark...</span>
                           </>
                         ) : (
                           <>
-                            <span className="text-sm sm:text-base md:text-lg lg:text-xl">Generate My First Spark</span>
+                            <Flame className="w-5 h-5 sm:w-6 sm:h-6" />
+                            <span>Generate My First Spark</span>
                             <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform duration-200" />
                           </>
                         )}
                       </button>
                     </div>
 
-                    {/* Trust indicators - More prominent */}
-                    <div className="pt-1 sm:pt-2 flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-xs sm:text-sm font-medium text-gray-600">
-                      <div className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="text-base sm:text-lg">🔒</span>
-                        <span>No account needed</span>
+                    {/* Trust indicators - Vibrant colors */}
+                    <div className="pt-2 sm:pt-3 flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm font-semibold">
+                      <div className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-300 rounded-full shadow-sm">
+                        <span className="text-base">🔒</span>
+                        <span className="text-emerald-700">No account needed</span>
                       </div>
-                      <div className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="text-base sm:text-lg">🎯</span>
-                        <span>Personalized by AI</span>
+                      <div className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-300 rounded-full shadow-sm">
+                        <span className="text-base">🎯</span>
+                        <span className="text-violet-700">Personalized by AI</span>
                       </div>
-                      <div className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="text-base sm:text-lg">⚡</span>
-                        <span>Takes 2-5 minutes</span>
+                      <div className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-300 rounded-full shadow-sm">
+                        <span className="text-base">⚡</span>
+                        <span className="text-amber-700">Takes 2-5 minutes</span>
                       </div>
                     </div>
                   </form>
