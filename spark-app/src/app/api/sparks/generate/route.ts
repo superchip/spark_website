@@ -4,6 +4,34 @@ import { generateSpark } from '@/lib/anthropic'
 
 export async function POST(request: Request) {
   try {
+    const body = await request.json()
+    const { goalId, goalTitle, goalDescription, anonymous } = body
+
+    // Handle anonymous spark generation (no auth required)
+    if (anonymous) {
+      if (!goalTitle) {
+        return NextResponse.json({ error: 'Goal title is required' }, { status: 400 })
+      }
+
+      // Generate spark without saving to database
+      const sparkData = await generateSpark({
+        goalTitle,
+        goalDescription,
+        previousSparks: [],
+      })
+
+      // Return spark data without database ID
+      const spark = {
+        title: sparkData.title,
+        description: sparkData.description,
+        effort_minutes: parseInt(sparkData.effort.match(/\d+/)?.[0] || '3'),
+        resource_link: sparkData.resourceLink,
+      }
+
+      return NextResponse.json({ spark })
+    }
+
+    // Handle authenticated spark generation
     const supabase = await createClient()
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -11,9 +39,6 @@ export async function POST(request: Request) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const body = await request.json()
-    const { goalId, goalTitle, goalDescription } = body
 
     if (!goalId || !goalTitle) {
       return NextResponse.json({ error: 'Goal ID and title are required' }, { status: 400 })

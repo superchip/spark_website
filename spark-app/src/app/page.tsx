@@ -1,114 +1,359 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
-import { Flame, Sparkles, Target, Zap } from 'lucide-react'
+import { Flame, Sparkles, Target, Zap, ArrowRight, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Spinner } from '@/components/ui/Spinner'
+import type { Spark } from '@/types'
 
 export default function LandingPage() {
+  const [goalTitle, setGoalTitle] = useState('')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedSpark, setGeneratedSpark] = useState<Spark | null>(null)
+  const [showForm, setShowForm] = useState(true)
+
+  const handleGenerateSpark = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!goalTitle.trim()) return
+
+    setIsGenerating(true)
+    try {
+      const res = await fetch('/api/sparks/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goalTitle: goalTitle.trim(),
+          anonymous: true,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        console.error('Error response from API:', data)
+        alert(`Failed to generate spark: ${data.error || 'Unknown error'}`)
+        return
+      }
+
+      if (data.spark) {
+        setGeneratedSpark(data.spark)
+        setShowForm(false)
+      } else {
+        alert('Failed to generate spark. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error generating spark:', error)
+      alert('Failed to generate spark. Please check your connection and try again.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-spark-orange-50 to-spark-amber-50">
-      {/* Header */}
-      <header className="px-4 py-6 md:px-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Flame className="w-8 h-8 text-spark-orange-600" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-spark-orange-600 to-spark-amber-600 bg-clip-text text-transparent">
-              Spark
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link href="/signup">
-              <Button variant="primary">Get Started</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-spark-orange-50 via-amber-50 to-spark-orange-50 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-spark-orange-200/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute top-1/4 right-0 w-80 h-80 bg-spark-amber-200/30 rounded-full blur-3xl translate-x-1/2"></div>
+      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-spark-orange-300/20 rounded-full blur-3xl"></div>
 
-      {/* Hero Section */}
-      <section className="px-4 py-16 md:py-24">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 rounded-full mb-6 backdrop-blur-sm">
-            <Sparkles className="w-4 h-4 text-spark-orange-600" />
-            <span className="text-sm font-medium text-gray-700">Micro-Activation Platform</span>
-          </div>
-
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-spark-orange-600 to-spark-amber-600 bg-clip-text text-transparent">
-              Ignite Your Potential,
-            </span>
-            <br />
-            <span className="text-gray-900">One Spark at a Time</span>
-          </h1>
-
-          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Overcome procrastination by breaking your goals into tiny, achievable sparks.
-            Each spark takes just 2-5 minutes. Start small, build momentum.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
-              <Button variant="primary" className="text-lg px-8 py-6">
-                <Flame className="w-5 h-5 mr-2" />
-                Start Your First Spark
-              </Button>
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="px-4 py-2 sm:py-3 md:py-4 md:px-8 backdrop-blur-sm bg-white/30 border-b border-white/50">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group">
+              <div className="p-1 sm:p-1.5 bg-gradient-to-br from-spark-orange-600 to-spark-amber-600 rounded-lg shadow-md group-hover:shadow-lg transition-shadow">
+                <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-spark-orange-600 to-spark-amber-600 bg-clip-text text-transparent">
+                Spark
+              </span>
             </Link>
-            <Link href="/login">
-              <Button variant="outline" className="text-lg px-8 py-6">
-                Sign In
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Link href="/login">
+                <button className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base text-gray-700 font-semibold hover:text-gray-900 transition-colors">
+                  Sign In
+                </button>
+              </Link>
+              <Link href="/signup">
+                <button className="px-4 py-1.5 sm:px-6 sm:py-2.5 text-sm sm:text-base bg-gradient-to-r from-spark-orange-600 to-spark-amber-600 text-white font-bold rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200">
+                  Get Started
+                </button>
+              </Link>
+            </div>
           </div>
+        </header>
+
+      {/* Hero Section - Spark Generation Form or Result */}
+      <section className="px-4 py-4 sm:py-6 md:py-10">
+        <div className="max-w-3xl mx-auto">
+          {showForm ? (
+            <div className="space-y-3 sm:space-y-4 md:space-y-6">
+              {/* Branding Badge - Smaller and more subtle */}
+              <div className="text-center">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/70 rounded-full mb-2 sm:mb-3 md:mb-4 backdrop-blur-sm shadow-sm border border-spark-orange-100">
+                  <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-spark-orange-600" />
+                  <span className="text-xs font-semibold text-spark-orange-700 tracking-wide uppercase">Micro-Activation Platform</span>
+                </div>
+
+                {/* Hero Heading - Improved typography and spacing */}
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold mb-2 sm:mb-3 md:mb-4 leading-tight px-2">
+                  <span className="bg-gradient-to-r from-spark-orange-600 via-spark-orange-500 to-spark-amber-600 bg-clip-text text-transparent">
+                    Ignite Your Potential,
+                  </span>
+                  <br />
+                  <span className="text-gray-900">One Spark at a Time</span>
+                </h1>
+
+                {/* Subheading - Better contrast and spacing */}
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 mb-3 sm:mb-4 md:mb-6 max-w-2xl mx-auto leading-relaxed font-light px-2">
+                  Overcome procrastination with tiny <strong className="font-semibold text-gray-700">2-5 minute actions</strong>. No sign-up required!
+                </p>
+              </div>
+
+              {/* Spark Generation Form - Enhanced card with better shadow */}
+              <Card className="shadow-2xl hover:shadow-3xl transition-all duration-300 border-0 bg-white/95 backdrop-blur-sm">
+                <CardContent className="p-5 sm:p-6 md:p-8 lg:p-10">
+                  <form onSubmit={handleGenerateSpark} className="space-y-3 sm:space-y-4 md:space-y-6">
+                    {/* Header with spark icon - Better alignment */}
+                    <div className="flex items-center gap-2 sm:gap-3 pb-1">
+                      <div className="p-2 sm:p-2.5 bg-gradient-to-br from-spark-orange-500 to-spark-amber-500 rounded-lg sm:rounded-xl shadow-lg">
+                        <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                      </div>
+                      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">What do you want to do?</h2>
+                    </div>
+
+                    {/* Info box - Softer, more modern design */}
+                    <div className="relative bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border-l-4 border-blue-500 rounded-r-xl sm:rounded-r-2xl p-3 sm:p-4 shadow-sm">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <span className="text-lg sm:text-xl md:text-2xl flex-shrink-0 mt-0.5">✨</span>
+                        <p className="text-blue-900 text-sm sm:text-base leading-relaxed">
+                          <strong className="font-bold">Typing your goal is your first spark</strong> – the most important step!
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Goal input - Better spacing and prominence */}
+                    <div>
+                      <label className="block text-sm sm:text-base font-bold text-gray-800 mb-2">
+                        Your Goal
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., I want to bake a cake"
+                        value={goalTitle}
+                        onChange={(e) => setGoalTitle(e.target.value)}
+                        autoFocus
+                        className="w-full px-4 py-3 sm:px-5 sm:py-4 text-base sm:text-lg font-medium border-3 border-gray-300 rounded-xl sm:rounded-2xl focus:border-spark-orange-500 focus:ring-4 focus:ring-spark-orange-200/50 transition-all duration-200 outline-none placeholder:text-gray-400 hover:border-gray-400 bg-white shadow-sm"
+                        style={{ borderWidth: '3px' }}
+                      />
+                    </div>
+
+                    {/* Action button - More prominent with better hover state */}
+                    <div>
+                      <button
+                        type="submit"
+                        disabled={isGenerating || !goalTitle.trim()}
+                        className="group relative w-full bg-gradient-to-r from-spark-orange-600 via-spark-orange-500 to-spark-amber-600 text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-5 md:py-6 px-6 sm:px-8 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 overflow-hidden"
+                      >
+                        {/* Shine effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
+
+                        {isGenerating ? (
+                          <>
+                            <Spinner />
+                            <span className="text-sm sm:text-base md:text-lg lg:text-xl">Generating Your Spark...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-sm sm:text-base md:text-lg lg:text-xl">Generate My First Spark</span>
+                            <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform duration-200" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Trust indicators - More prominent */}
+                    <div className="pt-1 sm:pt-2 flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-xs sm:text-sm font-medium text-gray-600">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        <span className="text-base sm:text-lg">🔒</span>
+                        <span>No account needed</span>
+                      </div>
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        <span className="text-base sm:text-lg">🎯</span>
+                        <span>Personalized by AI</span>
+                      </div>
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        <span className="text-base sm:text-lg">⚡</span>
+                        <span>Takes 2-5 minutes</span>
+                      </div>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          ) : generatedSpark ? (
+            <div className="space-y-4 sm:space-y-6 animate-fade-in">
+              {/* Success badge */}
+              <div className="text-center">
+                <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-green-50 border border-green-200 rounded-full mb-3 sm:mb-4">
+                  <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
+                  <span className="text-xs sm:text-sm font-semibold text-green-700">Spark Generated!</span>
+                </div>
+              </div>
+
+              {/* Generated Spark Display - Enhanced card */}
+              <Card className="shadow-xl border-0 overflow-hidden">
+                <div className="bg-gradient-to-r from-spark-orange-500 to-spark-amber-500 px-5 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white drop-shadow" />
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Your First Spark</h3>
+                  </div>
+                  <p className="text-white/90 text-xs sm:text-sm">Ready to take action? Here's your personalized micro-task:</p>
+                </div>
+
+                <CardContent className="p-5 sm:p-6 md:p-8 space-y-4 sm:space-y-5 md:space-y-6">
+                  {/* Spark content */}
+                  <div className="space-y-2 sm:space-y-3 md:space-y-4">
+                    <h4 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight">{generatedSpark.title}</h4>
+                    <p className="text-base sm:text-lg text-gray-600 leading-relaxed">{generatedSpark.description}</p>
+                  </div>
+
+                  {/* Time badge */}
+                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-spark-orange-100 to-spark-amber-100 border border-spark-orange-200 rounded-full">
+                      <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-spark-orange-600" />
+                      <span className="text-xs sm:text-sm font-bold text-spark-orange-700">
+                        {generatedSpark.effort_minutes} minutes
+                      </span>
+                    </div>
+                    <span className="text-xs sm:text-sm text-gray-500">Quick and actionable</span>
+                  </div>
+
+                  {/* Resource link */}
+                  {generatedSpark.resource_link && (
+                    <a
+                      href={generatedSpark.resource_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-spark-orange-600 hover:text-spark-orange-700 font-semibold text-sm sm:text-base transition-colors group"
+                    >
+                      <span>View Helpful Resource</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </a>
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="pt-4 sm:pt-6 space-y-3">
+                    <button
+                      onClick={() => {
+                        setShowForm(true)
+                        setGeneratedSpark(null)
+                        setGoalTitle('')
+                      }}
+                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl text-sm sm:text-base transition-colors"
+                    >
+                      Generate Another Spark
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Sign-up prompt - Enhanced design */}
+              <Card className="shadow-xl border-0 overflow-hidden bg-gradient-to-br from-spark-orange-600 via-spark-orange-500 to-spark-amber-600">
+                <CardContent className="p-6 sm:p-8 md:p-10 text-center relative">
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl mb-4 sm:mb-5 md:mb-6 shadow-lg">
+                      <Target className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
+                    </div>
+
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
+                      Love Your Spark?
+                    </h3>
+                    <p className="text-base sm:text-lg md:text-xl text-white/95 mb-6 sm:mb-7 md:mb-8 max-w-lg mx-auto leading-relaxed px-2">
+                      Sign up free to track progress, build momentum chains, and unlock unlimited sparks!
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                      <Link href="/signup">
+                        <button className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white text-spark-orange-600 font-bold text-base sm:text-lg rounded-xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-200">
+                          Sign Up Free
+                        </button>
+                      </Link>
+                      <Link href="/login">
+                        <button className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-transparent text-white font-bold text-base sm:text-lg border-2 border-white rounded-xl hover:bg-white/10 transition-all duration-200">
+                          Sign In
+                        </button>
+                      </Link>
+                    </div>
+
+                    <p className="text-white/80 text-xs sm:text-sm mt-4 sm:mt-5 md:mt-6 px-2">
+                      ✨ No credit card required • 🚀 Start building momentum today
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="px-4 py-16 md:py-24">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-900">
-            Why Spark Works
-          </h2>
+        {/* Features Section */}
+        <section className="px-4 py-16 md:py-24">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-gray-900">
+              Why Spark Works
+            </h2>
+            <p className="text-center text-lg text-gray-600 mb-16 max-w-2xl mx-auto">
+              Built on proven behavioral science to help you overcome procrastination
+            </p>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="text-center">
-              <CardContent className="pt-8 pb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-spark-orange-500 to-spark-amber-500 mb-4">
-                  <Zap className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-900">Tiny Actions</h3>
-                <p className="text-gray-600">
-                  Each spark takes just 2-5 minutes. No overwhelming tasks, just small steps forward.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-3 gap-8">
+              <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
+                <CardContent className="pt-10 pb-10">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-spark-orange-500 to-spark-amber-500 mb-6 shadow-lg">
+                    <Zap className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3 text-gray-900">Tiny Actions</h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    Each spark takes just 2-5 minutes. No overwhelming tasks, just small steps forward.
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card className="text-center">
-              <CardContent className="pt-8 pb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-spark-orange-500 to-spark-amber-500 mb-4">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-900">AI-Powered</h3>
-                <p className="text-gray-600">
-                  Smart AI generates personalized micro-tasks tailored to your goals and progress.
-                </p>
-              </CardContent>
-            </Card>
+              <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
+                <CardContent className="pt-10 pb-10">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-spark-orange-500 to-spark-amber-500 mb-6 shadow-lg">
+                    <Sparkles className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3 text-gray-900">AI-Powered</h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    Smart AI generates personalized micro-tasks tailored to your goals and progress.
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card className="text-center">
-              <CardContent className="pt-8 pb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-spark-orange-500 to-spark-amber-500 mb-4">
-                  <Target className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-900">Build Momentum</h3>
-                <p className="text-gray-600">
-                  Chain sparks together to create lasting progress and overcome procrastination.
-                </p>
-              </CardContent>
-            </Card>
+              <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
+                <CardContent className="pt-10 pb-10">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-spark-orange-500 to-spark-amber-500 mb-6 shadow-lg">
+                    <Target className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3 text-gray-900">Build Momentum</h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    Chain sparks together to create lasting progress and overcome procrastination.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* How It Works Section */}
       <section className="px-4 py-16 md:py-24 bg-white/40 backdrop-blur-sm">
@@ -182,12 +427,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="px-4 py-8 border-t border-gray-200">
-        <div className="max-w-6xl mx-auto text-center text-gray-600 text-sm">
-          <p>&copy; 2025 Spark. Overcome procrastination, one spark at a time.</p>
-        </div>
-      </footer>
+        {/* Footer */}
+        <footer className="px-4 py-8 border-t border-white/30">
+          <div className="max-w-6xl mx-auto text-center text-gray-600 text-sm">
+            <p>&copy; 2025 Spark. Overcome procrastination, one spark at a time.</p>
+          </div>
+        </footer>
+      </div>
     </div>
   )
 }

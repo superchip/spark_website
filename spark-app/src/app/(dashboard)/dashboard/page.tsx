@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Flame, Plus, LogOut } from 'lucide-react'
+import { Flame, Plus, LogOut, Sparkles, ArrowRight } from 'lucide-react'
 import { useGoals } from '@/hooks/useGoals'
 import { useUser } from '@/hooks/useUser'
 import { createClient } from '@/lib/supabase/client'
@@ -71,17 +71,36 @@ export default function DashboardPage() {
           ) : (
             <Card>
               <CardContent className="pt-6">
-                <form onSubmit={handleCreateGoal} className="space-y-4">
-                  <Input
-                    label="What do you want to achieve?"
-                    placeholder="e.g., Learn to play guitar, Start exercising..."
-                    value={newGoalTitle}
-                    onChange={(e) => setNewGoalTitle(e.target.value)}
-                    autoFocus
-                  />
+                <form onSubmit={handleCreateGoal} className="space-y-6">
+                  {/* Header with spark icon */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="w-6 h-6 text-spark-orange-500" />
+                    <h2 className="text-2xl font-bold text-gray-900">What do you want to do?</h2>
+                  </div>
+
+                  {/* Info box */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-blue-800 text-sm">
+                      ✨ <strong>Typing your goal is your first spark</strong> – the most important step!
+                    </p>
+                  </div>
+
+                  {/* Goal input */}
+                  <div>
+                    <Input
+                      label="Your Goal"
+                      placeholder="e.g., I want to bake a cake"
+                      value={newGoalTitle}
+                      onChange={(e) => setNewGoalTitle(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Action buttons */}
                   <div className="flex gap-2">
-                    <Button type="submit" variant="primary" isLoading={isCreating}>
-                      Create Goal
+                    <Button type="submit" variant="primary" isLoading={isCreating} className="flex-1">
+                      Generate My First Spark
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                     <Button type="button" variant="outline" onClick={() => {
                       setShowNewGoal(false)
