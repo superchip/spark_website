@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Flame, LogOut, Sparkles, ArrowRight, Clock, ExternalLink, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import { useGoals } from '@/hooks/useGoals'
@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { LoadingPage } from '@/components/LoadingPage'
 import type { Spark, Goal } from '@/types'
+import confetti from 'canvas-confetti'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -26,8 +27,78 @@ export default function DashboardPage() {
   const [isGeneratingSpark, setIsGeneratingSpark] = useState(false)
   const [showCompletion, setShowCompletion] = useState(false)
   const [sparksCompletedCount, setSparksCompletedCount] = useState(0)
+  const [isButtonAnimating, setIsButtonAnimating] = useState(false)
 
   if (userLoading) return <LoadingPage />
+
+  // Celebration effects
+  const triggerCelebration = () => {
+    // Multi-burst confetti effect
+    const duration = 3000
+    const animationEnd = Date.now() + duration
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min
+    }
+
+    const interval: NodeJS.Timeout = setInterval(() => {
+      const timeLeft = animationEnd - Date.now()
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval)
+      }
+
+      const particleCount = 50 * (timeLeft / duration)
+
+      // Fire from left
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        colors: ['#f97316', '#fb923c', '#fdba74', '#fbbf24', '#fcd34d']
+      })
+
+      // Fire from right
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        colors: ['#f97316', '#fb923c', '#fdba74', '#fbbf24', '#fcd34d']
+      })
+    }, 250)
+
+    // Play success sound (using Web Audio API)
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+
+      // Create a celebratory chord
+      const playTone = (frequency: number, startTime: number, duration: number) => {
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+
+        oscillator.frequency.value = frequency
+        oscillator.type = 'sine'
+
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + startTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + startTime + duration)
+
+        oscillator.start(audioContext.currentTime + startTime)
+        oscillator.stop(audioContext.currentTime + startTime + duration)
+      }
+
+      // Play a happy chord progression
+      playTone(523.25, 0, 0.2)    // C5
+      playTone(659.25, 0, 0.2)    // E5
+      playTone(783.99, 0, 0.2)    // G5
+      playTone(1046.50, 0.15, 0.3) // C6
+    } catch (error) {
+      console.log('Audio not supported')
+    }
+  }
 
   const handleCreateGoal = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,10 +148,14 @@ export default function DashboardPage() {
   const handleSparkCompleted = async () => {
     if (!generatedSpark) return
 
+    // Trigger button animation immediately for instant feedback
+    setIsButtonAnimating(true)
+
     const goalId = selectedGoal?.id || goals.find(g => g.title === createdGoalTitle)?.id
 
     if (!goalId) {
       console.error('No goal ID found')
+      setIsButtonAnimating(false)
       return
     }
 
@@ -97,9 +172,16 @@ export default function DashboardPage() {
       })
 
       if (response.ok) {
-        // Update local state
-        setShowCompletion(true)
-        setSparksCompletedCount(prev => prev + 1)
+        // Trigger celebration effects immediately
+        triggerCelebration()
+
+        // Small delay to let confetti start before transition
+        setTimeout(() => {
+          // Update local state
+          setShowCompletion(true)
+          setSparksCompletedCount(prev => prev + 1)
+          setIsButtonAnimating(false)
+        }, 500)
 
         // Refresh goals to get updated completion count
         await refreshGoals()
@@ -107,10 +189,12 @@ export default function DashboardPage() {
         const error = await response.json()
         console.error('Error completing spark:', error)
         alert('Failed to mark spark as complete. Please try again.')
+        setIsButtonAnimating(false)
       }
     } catch (error) {
       console.error('Error completing spark:', error)
       alert('Failed to mark spark as complete. Please try again.')
+      setIsButtonAnimating(false)
     }
   }
 
@@ -245,29 +329,53 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ) : showCompletion ? (
-                <div className="space-y-6 py-4">
-                  {/* Success icon */}
+                <div className="space-y-6 py-4 animate-in fade-in duration-500">
+                  {/* Success icon with animation */}
                   <div className="flex justify-center">
-                    <div className="w-24 h-24 rounded-full bg-green-500 flex items-center justify-center shadow-lg">
-                      <svg className="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-2xl animate-bounce">
+                        <svg className="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      {/* Pulsing glow effect */}
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 blur-xl opacity-50 animate-pulse"></div>
+                      {/* Expanding rings */}
+                      <div className="absolute inset-0 rounded-full border-4 border-green-400 animate-ping"></div>
                     </div>
                   </div>
 
-                  {/* Celebration text */}
-                  <div className="text-center">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Amazing! 🎉</h2>
-                    <p className="text-lg text-gray-600">You're building momentum!</p>
+                  {/* Celebration text with gradient */}
+                  <div className="text-center space-y-2">
+                    <h2 className="text-4xl font-extrabold bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 bg-clip-text text-transparent animate-in slide-in-from-bottom-4 duration-500">
+                      Amazing! 🎉✨🔥
+                    </h2>
+                    <p className="text-xl text-gray-600 font-medium animate-in slide-in-from-bottom-4 duration-700">
+                      You're building momentum!
+                    </p>
+                    <p className="text-sm text-gray-500 italic animate-in fade-in duration-1000 delay-300">
+                      Every spark counts toward your goal!
+                    </p>
                   </div>
 
-                  {/* Sparks completed card */}
-                  <div className="bg-white rounded-xl p-6 text-center border border-gray-200">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <Flame className="w-6 h-6 text-spark-orange-500" />
-                      <span className="text-3xl font-bold text-spark-orange-600">{sparksCompletedCount}</span>
+                  {/* Sparks completed card with celebration */}
+                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-8 text-center border-2 border-spark-orange-200 shadow-lg animate-in zoom-in duration-500 delay-500">
+                    <div className="flex items-center justify-center gap-3 mb-3">
+                      <Flame className="w-8 h-8 text-spark-orange-500 animate-pulse" />
+                      <span className="text-5xl font-black bg-gradient-to-r from-spark-orange-600 to-spark-amber-600 bg-clip-text text-transparent">
+                        {sparksCompletedCount}
+                      </span>
+                      <Flame className="w-8 h-8 text-spark-orange-500 animate-pulse" />
                     </div>
-                    <p className="text-gray-600">Spark{sparksCompletedCount !== 1 ? 's' : ''} completed</p>
+                    <p className="text-lg font-semibold text-gray-700">
+                      Spark{sparksCompletedCount !== 1 ? 's' : ''} completed this session!
+                    </p>
+                    <div className="mt-3 text-sm text-gray-500">
+                      {sparksCompletedCount === 1 && "Great start! 🌟"}
+                      {sparksCompletedCount === 2 && "You're on fire! 🔥"}
+                      {sparksCompletedCount === 3 && "Unstoppable! 💪"}
+                      {sparksCompletedCount >= 4 && "Legendary streak! 🚀"}
+                    </div>
                   </div>
 
                   {/* Action buttons */}
@@ -427,12 +535,39 @@ export default function DashboardPage() {
                       {/* I Did This button */}
                       <button
                         onClick={handleSparkCompleted}
-                        className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm"
+                        disabled={isButtonAnimating}
+                        className={`
+                          relative w-full bg-gradient-to-r from-green-500 to-emerald-500
+                          hover:from-green-600 hover:to-emerald-600
+                          text-white font-bold py-4 px-6 rounded-xl
+                          transition-all duration-300
+                          flex items-center justify-center gap-2
+                          shadow-lg shadow-green-500/50 hover:shadow-xl hover:shadow-green-500/70
+                          hover:scale-105 active:scale-95
+                          disabled:opacity-70 disabled:cursor-not-allowed
+                          overflow-hidden
+                          ${isButtonAnimating ? 'animate-pulse scale-95' : ''}
+                        `}
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        {/* Shine effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] hover:translate-x-[200%] transition-transform duration-700" />
+
+                        {/* Icon with animation */}
+                        <svg
+                          className={`w-6 h-6 ${isButtonAnimating ? 'animate-bounce' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
-                        I Did This! (Sparked!)
+
+                        <span className="relative z-10">
+                          {isButtonAnimating ? 'Celebrating...' : 'I Did This! (Sparked!)'}
+                        </span>
+
+                        {/* Sparkle emojis on hover */}
+                        <span className="text-xl opacity-0 group-hover:opacity-100 transition-opacity">✨</span>
                       </button>
                     </div>
                   </div>
