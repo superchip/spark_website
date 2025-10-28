@@ -485,10 +485,62 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        <div className="mb-6 flex justify-center">
-          <Card className="w-full max-w-2xl">
-            <CardContent className="pt-6">
-              {isGeneratingSpark ? (
+        {/* Create Goal Card - Always visible when not viewing progress */}
+        {!showProgress && !generatedSpark && !showCompletion && !isGeneratingSpark && (
+          <div className="mb-6 flex justify-center">
+            <Card className="w-full max-w-2xl">
+              <CardContent className="pt-6">
+                <form onSubmit={handleCreateGoal} className="space-y-6">
+                  {/* Header with spark icon */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="w-6 h-6 text-spark-orange-500" />
+                    <h2 className="text-2xl font-bold text-gray-900">What do you want to do?</h2>
+                  </div>
+
+                  {/* Info box */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-blue-800 text-sm">
+                      ✨ <strong>Typing your goal is your first spark</strong> – the most important step!
+                    </p>
+                  </div>
+
+                  {/* Goal input */}
+                  <div>
+                    <Input
+                      label="Your Goal"
+                      placeholder="e.g., I want to bake a cake"
+                      value={newGoalTitle}
+                      onChange={(e) => setNewGoalTitle(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2">
+                    <Button type="submit" variant="primary" isLoading={isCreating} className="flex-1">
+                      {selectedGoal ? 'Generate Next Spark' : 'Generate My First Spark'}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setNewGoalTitle('')}
+                      disabled={!newGoalTitle.trim()}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Spark workflow cards */}
+        {(isGeneratingSpark || showCompletion || generatedSpark) && !showProgress && (
+          <div className="mb-6 flex justify-center">
+            <Card className="w-full max-w-2xl">
+              <CardContent className="pt-6">
+                {isGeneratingSpark ? (
                 <div className="space-y-6 py-12 text-center">
                   {/* Animated flame icon */}
                   <div className="flex justify-center">
@@ -576,47 +628,6 @@ export default function DashboardPage() {
                     </Button>
                   </div>
                 </div>
-              ) : !selectedGoal && !generatedSpark ? (
-                <form onSubmit={handleCreateGoal} className="space-y-6">
-                  {/* Header with spark icon */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="w-6 h-6 text-spark-orange-500" />
-                    <h2 className="text-2xl font-bold text-gray-900">What do you want to do?</h2>
-                  </div>
-
-                  {/* Info box */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-blue-800 text-sm">
-                      ✨ <strong>Typing your goal is your first spark</strong> – the most important step!
-                    </p>
-                  </div>
-
-                  {/* Goal input */}
-                  <div>
-                    <Input
-                      label="Your Goal"
-                      placeholder="e.g., I want to bake a cake"
-                      value={newGoalTitle}
-                      onChange={(e) => setNewGoalTitle(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex gap-2">
-                    <Button type="submit" variant="primary" isLoading={isCreating} className="flex-1">
-                      {selectedGoal ? 'Generate Next Spark' : 'Generate My First Spark'}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setNewGoalTitle('')}
-                      disabled={!newGoalTitle.trim()}
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                </form>
               ) : selectedGoal && !generatedSpark ? (
                 <div className="space-y-6">
                   {/* Goal header */}
@@ -812,9 +823,10 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ) : null}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Progress View */}
         {showProgress && selectedGoal && (
