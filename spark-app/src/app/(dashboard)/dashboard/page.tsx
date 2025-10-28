@@ -28,6 +28,8 @@ export default function DashboardPage() {
   const [showCompletion, setShowCompletion] = useState(false)
   const [sparksCompletedCount, setSparksCompletedCount] = useState(0)
   const [isButtonAnimating, setIsButtonAnimating] = useState(false)
+  const [sparksSkippedCount, setSparksSkippedCount] = useState(0)
+  const [isSkipping, setIsSkipping] = useState(false)
 
   if (userLoading) return <LoadingPage />
 
@@ -198,6 +200,55 @@ export default function DashboardPage() {
     }
   }
 
+  const handleSkipSpark = async () => {
+    if (!generatedSpark) return
+
+    const goalId = selectedGoal?.id || goals.find(g => g.title === createdGoalTitle)?.id
+
+    if (!goalId) {
+      console.error('No goal ID found')
+      return
+    }
+
+    // Track skip count
+    setSparksSkippedCount(prev => prev + 1)
+
+    // Trigger skip animation and generate new spark
+    setIsSkipping(true)
+
+    // Small delay for animation effect
+    setTimeout(async () => {
+      setIsGeneratingSpark(true)
+      setIsSkipping(false)
+
+      try {
+        const sparkResponse = await fetch('/api/sparks/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            goalId: goalId,
+            goalTitle: selectedGoal?.title || createdGoalTitle,
+            goalDescription: selectedGoal?.description || '',
+          }),
+        })
+
+        const sparkData = await sparkResponse.json()
+
+        if (sparkResponse.ok && sparkData.spark) {
+          setGeneratedSpark(sparkData.spark)
+        } else {
+          console.error('Error generating spark:', sparkData.error)
+          alert('Failed to generate a new spark. Please try again.')
+        }
+      } catch (error) {
+        console.error('Error generating spark:', error)
+        alert('Failed to generate a new spark. Please try again.')
+      } finally {
+        setIsGeneratingSpark(false)
+      }
+    }, 300)
+  }
+
   const handleGetAnotherSpark = async () => {
     // Hide completion screen and show loading immediately
     setShowCompletion(false)
@@ -245,6 +296,7 @@ export default function DashboardPage() {
     setSelectedGoal(null)
     setCreatedGoalTitle('')
     setSparksCompletedCount(0)
+    setSparksSkippedCount(0)
   }
 
   const handleSelectGoal = async (goal: Goal) => {
@@ -500,8 +552,13 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Spark card with border */}
-                  <div className="border-[3px] border-spark-orange-400 rounded-2xl p-6 bg-gradient-to-br from-orange-50/30 to-amber-50/30">
-                    <div className="space-y-4">
+                  <div className={`
+                    border-[3px] border-spark-orange-400 rounded-2xl p-6
+                    bg-gradient-to-br from-orange-50/30 to-amber-50/30
+                    transition-all duration-300
+                    ${isSkipping ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}
+                  `}>
+                    <div className="space-y-5">
                       {/* Icon and Title */}
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0">
@@ -532,50 +589,100 @@ export default function DashboardPage() {
                         )}
                       </div>
 
-                      {/* I Did This button */}
-                      <button
-                        onClick={handleSparkCompleted}
-                        disabled={isButtonAnimating}
-                        className={`
-                          relative w-full bg-gradient-to-r from-green-500 to-emerald-500
-                          hover:from-green-600 hover:to-emerald-600
-                          text-white font-bold py-4 px-6 rounded-xl
-                          transition-all duration-300
-                          flex items-center justify-center gap-2
-                          shadow-lg shadow-green-500/50 hover:shadow-xl hover:shadow-green-500/70
-                          hover:scale-105 active:scale-95
-                          disabled:opacity-70 disabled:cursor-not-allowed
-                          overflow-hidden
-                          ${isButtonAnimating ? 'animate-pulse scale-95' : ''}
-                        `}
-                      >
-                        {/* Shine effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] hover:translate-x-[200%] transition-transform duration-700" />
-
-                        {/* Icon with animation */}
-                        <svg
-                          className={`w-6 h-6 ${isButtonAnimating ? 'animate-bounce' : ''}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      {/* Binary Choice Buttons - Side by Side */}
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        {/* Skip Button - Left Side */}
+                        <button
+                          onClick={handleSkipSpark}
+                          disabled={isButtonAnimating || isSkipping || isGeneratingSpark}
+                          className={`
+                            relative bg-gray-100 hover:bg-gray-200
+                            text-gray-700 font-semibold py-4 px-4 rounded-xl
+                            transition-all duration-300
+                            flex items-center justify-center gap-2
+                            border-2 border-gray-300 hover:border-gray-400
+                            hover:scale-105 active:scale-95
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            group
+                          `}
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
+                          {/* Rotate icon on skip */}
+                          <svg
+                            className={`w-5 h-5 transition-transform duration-500 ${isSkipping ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          <span className="text-sm md:text-base">
+                            {isSkipping ? 'Shuffling...' : 'Try Another'}
+                          </span>
+                        </button>
 
-                        <span className="relative z-10">
-                          {isButtonAnimating ? 'Celebrating...' : 'I Did This! (Sparked!)'}
-                        </span>
+                        {/* I Did This Button - Right Side */}
+                        <button
+                          onClick={handleSparkCompleted}
+                          disabled={isButtonAnimating || isSkipping || isGeneratingSpark}
+                          className={`
+                            relative bg-gradient-to-r from-green-500 to-emerald-500
+                            hover:from-green-600 hover:to-emerald-600
+                            text-white font-bold py-4 px-4 rounded-xl
+                            transition-all duration-300
+                            flex items-center justify-center gap-2
+                            shadow-lg shadow-green-500/50 hover:shadow-xl hover:shadow-green-500/70
+                            hover:scale-105 active:scale-95
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            overflow-hidden
+                            ${isButtonAnimating ? 'animate-pulse scale-95' : ''}
+                          `}
+                        >
+                          {/* Shine effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] hover:translate-x-[200%] transition-transform duration-700" />
 
-                        {/* Sparkle emojis on hover */}
-                        <span className="text-xl opacity-0 group-hover:opacity-100 transition-opacity">✨</span>
-                      </button>
+                          {/* Icon with animation */}
+                          <svg
+                            className={`w-5 h-5 relative z-10 ${isButtonAnimating ? 'animate-bounce' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+
+                          <span className="relative z-10 text-sm md:text-base">
+                            {isButtonAnimating ? 'Sparked!' : 'I Did This!'}
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Bottom note */}
-                  <div className="flex items-start gap-2 text-sm text-gray-600">
-                    <Flame className="w-4 h-4 text-spark-orange-500 flex-shrink-0 mt-0.5" />
-                    <p>Only mark "Sparked!" if you actually did this specific action</p>
+                  {/* Session Stats & Help Text */}
+                  <div className="space-y-3">
+                    {/* Stats bar */}
+                    {(sparksCompletedCount > 0 || sparksSkippedCount > 0) && (
+                      <div className="flex items-center justify-center gap-4 text-sm">
+                        <div className="flex items-center gap-1.5 text-green-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="font-semibold">{sparksCompletedCount} completed</span>
+                        </div>
+                        <div className="w-px h-4 bg-gray-300"></div>
+                        <div className="flex items-center gap-1.5 text-gray-500">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          <span>{sparksSkippedCount} skipped</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Help text */}
+                    <div className="flex items-start gap-2 text-sm text-gray-600 text-center justify-center">
+                      <p>💡 Only mark "I Did This!" if you completed the action</p>
+                    </div>
                   </div>
                 </div>
               ) : null}
