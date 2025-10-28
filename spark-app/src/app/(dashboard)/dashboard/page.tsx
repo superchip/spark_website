@@ -74,9 +74,44 @@ export default function DashboardPage() {
     setShowCompletion(false)
   }
 
-  const handleSparkCompleted = () => {
-    setShowCompletion(true)
-    setSparksCompletedCount(prev => prev + 1)
+  const handleSparkCompleted = async () => {
+    if (!generatedSpark) return
+
+    const goalId = selectedGoal?.id || goals.find(g => g.title === createdGoalTitle)?.id
+
+    if (!goalId) {
+      console.error('No goal ID found')
+      return
+    }
+
+    try {
+      // Call the API to mark the spark as complete
+      const response = await fetch('/api/sparks/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sparkId: generatedSpark.id,
+          goalId: goalId,
+          sessionId: generatedSpark.id, // Using spark ID as session ID for now
+        }),
+      })
+
+      if (response.ok) {
+        // Update local state
+        setShowCompletion(true)
+        setSparksCompletedCount(prev => prev + 1)
+
+        // Refresh goals to get updated completion count
+        await refreshGoals()
+      } else {
+        const error = await response.json()
+        console.error('Error completing spark:', error)
+        alert('Failed to mark spark as complete. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error completing spark:', error)
+      alert('Failed to mark spark as complete. Please try again.')
+    }
   }
 
   const handleGetAnotherSpark = async () => {
