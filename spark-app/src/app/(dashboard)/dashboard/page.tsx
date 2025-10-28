@@ -115,16 +115,17 @@ export default function DashboardPage() {
   }
 
   const handleGetAnotherSpark = async () => {
+    // Hide completion screen and show loading immediately
+    setShowCompletion(false)
+    setIsGeneratingSpark(true)
+
     if (selectedGoal) {
-      setShowCompletion(false)
       await handleGenerateSparkForGoal()
     } else {
       // If we just created a new goal, find it and use it
       const currentGoal = goals.find(g => g.title === createdGoalTitle)
       if (currentGoal) {
         setSelectedGoal(currentGoal)
-        setShowCompletion(false)
-        setIsGeneratingSpark(true)
         try {
           const sparkResponse = await fetch('/api/sparks/generate', {
             method: 'POST',
@@ -148,6 +149,8 @@ export default function DashboardPage() {
         } finally {
           setIsGeneratingSpark(false)
         }
+      } else {
+        setIsGeneratingSpark(false)
       }
     }
   }
@@ -223,7 +226,25 @@ export default function DashboardPage() {
         <div className="mb-6 flex justify-center">
           <Card className="w-full max-w-2xl">
             <CardContent className="pt-6">
-              {showCompletion ? (
+              {isGeneratingSpark ? (
+                <div className="space-y-6 py-12 text-center">
+                  {/* Animated flame icon */}
+                  <div className="flex justify-center">
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-spark-orange-400 to-spark-amber-500 flex items-center justify-center shadow-2xl animate-pulse">
+                        <Flame className="w-12 h-12 text-white" />
+                      </div>
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-spark-orange-400 to-spark-amber-500 blur-xl opacity-50 animate-pulse"></div>
+                    </div>
+                  </div>
+
+                  {/* Loading text */}
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-bold text-gray-900">Igniting your spark...</h2>
+                    <p className="text-lg text-gray-600">Creating the perfect micro-action for you</p>
+                  </div>
+                </div>
+              ) : showCompletion ? (
                 <div className="space-y-6 py-4">
                   {/* Success icon */}
                   <div className="flex justify-center">
@@ -254,7 +275,7 @@ export default function DashboardPage() {
                     <Button
                       variant="primary"
                       onClick={handleGetAnotherSpark}
-                      isLoading={isGeneratingSpark}
+                      disabled={isGeneratingSpark}
                       className="w-full bg-spark-orange-500 hover:bg-spark-orange-600 py-3.5"
                     >
                       <Flame className="w-5 h-5 mr-2" />
