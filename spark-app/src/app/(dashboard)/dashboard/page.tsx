@@ -30,8 +30,103 @@ export default function DashboardPage() {
   const [isButtonAnimating, setIsButtonAnimating] = useState(false)
   const [sparksSkippedCount, setSparksSkippedCount] = useState(0)
   const [isSkipping, setIsSkipping] = useState(false)
+  const [showProgress, setShowProgress] = useState(false)
+  const [completedSparks, setCompletedSparks] = useState<any[]>([])
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false)
+  const [showProgressCelebration, setShowProgressCelebration] = useState(false)
 
   if (userLoading) return <LoadingPage />
+
+  // Calculate progress metrics
+  const getProgressMetrics = () => {
+    if (!completedSparks.length) return null
+
+    const totalMinutes = completedSparks.reduce((sum, completion) => {
+      return sum + (completion.sparks?.effort_minutes || 0)
+    }, 0)
+
+    const firstCompletion = completedSparks[completedSparks.length - 1]
+    const lastCompletion = completedSparks[0]
+
+    const firstDate = new Date(firstCompletion.completed_at)
+    const lastDate = new Date(lastCompletion.completed_at)
+    const daysDiff = Math.ceil((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24))
+    const activeDays = daysDiff === 0 ? 1 : daysDiff + 1
+
+    // Calculate streak (consecutive days)
+    let streak = 1
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    for (let i = 0; i < completedSparks.length - 1; i++) {
+      const current = new Date(completedSparks[i].completed_at)
+      const next = new Date(completedSparks[i + 1].completed_at)
+      current.setHours(0, 0, 0, 0)
+      next.setHours(0, 0, 0, 0)
+
+      const diffDays = Math.ceil((current.getTime() - next.getTime()) / (1000 * 60 * 60 * 24))
+      if (diffDays === 1) {
+        streak++
+      } else {
+        break
+      }
+    }
+
+    return {
+      totalSparks: completedSparks.length,
+      totalMinutes,
+      activeDays,
+      streak
+    }
+  }
+
+  // Get achievement badges
+  const getAchievements = () => {
+    const count = completedSparks.length
+    const metrics = getProgressMetrics()
+    const badges = []
+
+    if (count >= 1) badges.push({ icon: '🌟', label: 'First Spark', color: 'yellow' })
+    if (count >= 5) badges.push({ icon: '🔥', label: 'On Fire', color: 'orange' })
+    if (count >= 10) badges.push({ icon: '💪', label: 'Committed', color: 'purple' })
+    if (metrics?.streak >= 3) badges.push({ icon: '⚡', label: `${metrics.streak}-Day Streak`, color: 'blue' })
+    if (metrics?.totalMinutes >= 30) badges.push({ icon: '⏱️', label: 'Time Invested', color: 'green' })
+
+    return badges
+  }
+
+  // Get motivational message
+  const getMotivationalMessage = () => {
+    const count = completedSparks.length
+    const messages = [
+      { threshold: 1, message: "You've taken the first step! Every expert was once a beginner. ✨" },
+      { threshold: 3, message: "You're building momentum! Consistency is the key to transformation. 💪" },
+      { threshold: 5, message: "Incredible progress! You're proving that small actions lead to big changes. 🚀" },
+      { threshold: 7, message: "You're unstoppable! Your dedication is inspiring. Keep going! 🔥" },
+      { threshold: 10, message: "Mastery in progress! You're not just learning—you're transforming. 🌟" },
+    ]
+
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (count >= messages[i].threshold) {
+        return messages[i].message
+      }
+    }
+    return messages[0].message
+  }
+
+  // Format relative time
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    return `${Math.floor(diffDays / 30)} months ago`
+  }
 
   // Celebration effects
   const triggerCelebration = () => {
@@ -299,11 +394,42 @@ export default function DashboardPage() {
     setSparksSkippedCount(0)
   }
 
+  const handleViewProgress = async (goal: Goal) => {
+    setSelectedGoal(goal)
+    setShowProgress(true)
+    setShowGoals(false)
+    setIsLoadingProgress(true)
+
+    try {
+      const response = await fetch(`/api/goals/${goal.id}/completed-sparks`)
+      const data = await response.json()
+
+      if (response.ok) {
+        setCompletedSparks(data.completedSparks || [])
+
+        // Trigger celebration if they have completed sparks
+        if (data.completedSparks && data.completedSparks.length > 0) {
+          setTimeout(() => {
+            setShowProgressCelebration(true)
+            triggerCelebration()
+          }, 300)
+        }
+      } else {
+        console.error('Error fetching completed sparks:', data.error)
+      }
+    } catch (error) {
+      console.error('Error fetching completed sparks:', error)
+    } finally {
+      setIsLoadingProgress(false)
+    }
+  }
+
   const handleSelectGoal = async (goal: Goal) => {
     setSelectedGoal(goal)
     setShowGoals(false)
     setGeneratedSpark(null)
     setCreatedGoalTitle('')
+    setShowProgress(false)
   }
 
   const handleGenerateSparkForGoal = async () => {
@@ -690,7 +816,274 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {generatedSpark && !showCompletion && (
+        {/* Progress View */}
+        {showProgress && selectedGoal && (
+          <div className="mb-6 flex justify-center">
+            <Card className="w-full max-w-2xl">
+              <CardContent className="pt-6">
+                {isLoadingProgress ? (
+                  <div className="flex justify-center py-12">
+                    <Spinner size="lg" />
+                  </div>
+                ) : completedSparks.length === 0 ? (
+                  <div className="text-center py-12 space-y-4">
+                    <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-spark-orange-400 to-spark-amber-500 flex items-center justify-center">
+                      <Sparkles className="w-12 h-12 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Ready to Start?</h3>
+                      <p className="text-gray-600 mb-1">"{selectedGoal.title}"</p>
+                      <p className="text-sm text-gray-500">No sparks completed yet for this goal.</p>
+                      <p className="text-sm text-gray-500 mt-2">Generate your first spark to begin your journey!</p>
+                    </div>
+                    <div className="flex gap-3 justify-center pt-4">
+                      <Button
+                        variant="primary"
+                        onClick={() => {
+                          setShowProgress(false)
+                          handleGenerateSparkForGoal()
+                        }}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate First Spark
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowProgress(false)
+                          setSelectedGoal(null)
+                        }}
+                      >
+                        Back
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6 animate-in fade-in duration-700">
+                    {/* Hero Banner */}
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 p-8 text-center">
+                      <div className="relative z-10">
+                        <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-2 animate-in slide-in-from-top duration-500">
+                          🎉 You're Making It Happen! 🎉
+                        </h2>
+                        <p className="text-lg text-white/90 animate-in slide-in-from-top duration-700">
+                          Look at the amazing progress you've made!
+                        </p>
+                      </div>
+                      {/* Animated background effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-500/20 to-orange-500/20 animate-pulse"></div>
+                    </div>
+
+                    {/* Goal Title Card */}
+                    <div className="text-center animate-in zoom-in duration-500 delay-200">
+                      <p className="text-sm text-gray-500 mb-2">Your Goal</p>
+                      <h3 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-spark-orange-600 to-spark-amber-600 bg-clip-text text-transparent">
+                        "{selectedGoal.title}"
+                      </h3>
+                    </div>
+
+                    {/* Stats Cards */}
+                    {(() => {
+                      const metrics = getProgressMetrics()
+                      return metrics ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in slide-in-from-bottom duration-700 delay-300">
+                          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-300 rounded-xl p-4 text-center">
+                            <div className="text-3xl mb-1">🔥</div>
+                            <div className="text-2xl font-bold text-yellow-700">{metrics.totalSparks}</div>
+                            <div className="text-xs text-yellow-600 font-medium">Sparks</div>
+                          </div>
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-xl p-4 text-center">
+                            <div className="text-3xl mb-1">⏱️</div>
+                            <div className="text-2xl font-bold text-blue-700">{metrics.totalMinutes}</div>
+                            <div className="text-xs text-blue-600 font-medium">Minutes</div>
+                          </div>
+                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 rounded-xl p-4 text-center">
+                            <div className="text-3xl mb-1">📅</div>
+                            <div className="text-2xl font-bold text-purple-700">{metrics.activeDays}</div>
+                            <div className="text-xs text-purple-600 font-medium">Days</div>
+                          </div>
+                          <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 rounded-xl p-4 text-center">
+                            <div className="text-3xl mb-1">⚡</div>
+                            <div className="text-2xl font-bold text-green-700">{metrics.streak}</div>
+                            <div className="text-xs text-green-600 font-medium">Day Streak</div>
+                          </div>
+                        </div>
+                      ) : null
+                    })()}
+
+                    {/* Progress Bar */}
+                    <div className="animate-in slide-in-from-left duration-700 delay-500">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Your Progress</span>
+                        <span className="text-sm font-bold text-spark-orange-600">
+                          {Math.min(100, Math.round((completedSparks.length / 10) * 100))}%
+                        </span>
+                      </div>
+                      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-spark-orange-500 to-spark-amber-500 rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${Math.min(100, (completedSparks.length / 10) * 100)}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 text-center">
+                        {completedSparks.length < 10
+                          ? `Just ${10 - completedSparks.length} more to reach mastery level! 🎯`
+                          : "You've reached mastery level! 🌟"}
+                      </p>
+                    </div>
+
+                    {/* Achievement Badges */}
+                    {(() => {
+                      const achievements = getAchievements()
+                      return achievements.length > 0 ? (
+                        <div className="animate-in zoom-in duration-700 delay-700">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3 text-center">Achievements Unlocked</h4>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {achievements.map((badge, index) => (
+                              <div
+                                key={index}
+                                className={`
+                                  px-4 py-2 rounded-full text-sm font-medium border-2
+                                  ${badge.color === 'yellow' ? 'bg-yellow-50 border-yellow-300 text-yellow-700' : ''}
+                                  ${badge.color === 'orange' ? 'bg-orange-50 border-orange-300 text-orange-700' : ''}
+                                  ${badge.color === 'purple' ? 'bg-purple-50 border-purple-300 text-purple-700' : ''}
+                                  ${badge.color === 'blue' ? 'bg-blue-50 border-blue-300 text-blue-700' : ''}
+                                  ${badge.color === 'green' ? 'bg-green-50 border-green-300 text-green-700' : ''}
+                                  animate-in zoom-in duration-500
+                                `}
+                                style={{ animationDelay: `${800 + index * 100}ms` }}
+                              >
+                                <span className="mr-1">{badge.icon}</span>
+                                {badge.label}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null
+                    })()}
+
+                    {/* Motivational Quote */}
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-6 text-center animate-in slide-in-from-bottom duration-700 delay-900">
+                      <p className="text-base md:text-lg text-indigo-900 font-medium italic">
+                        "{getMotivationalMessage()}"
+                      </p>
+                    </div>
+
+                    {/* Achievement Timeline */}
+                    <div className="animate-in fade-in duration-700 delay-1000">
+                      <h4 className="text-lg font-bold text-gray-800 mb-4 text-center">
+                        Your Journey
+                      </h4>
+                      <div className="space-y-4 relative">
+                        {/* Vertical timeline line */}
+                        <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-gradient-to-b from-spark-orange-300 to-spark-amber-300"></div>
+
+                        {completedSparks.map((completion: any, index: number) => {
+                          const spark = completion.sparks
+                          const isToday = getRelativeTime(completion.completed_at) === 'Today'
+                          return (
+                            <div
+                              key={completion.id}
+                              className="relative pl-14 animate-in slide-in-from-right duration-500"
+                              style={{ animationDelay: `${1100 + index * 100}ms` }}
+                            >
+                              {/* Timeline dot */}
+                              <div className="absolute left-4 top-3 w-5 h-5 rounded-full bg-gradient-to-br from-spark-orange-500 to-spark-amber-500 border-4 border-white shadow-lg"></div>
+
+                              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                {/* Date badge */}
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600">
+                                    <Clock className="w-3 h-3" />
+                                    {getRelativeTime(completion.completed_at)}
+                                  </span>
+                                  {isToday && (
+                                    <span className="px-2 py-0.5 bg-spark-orange-500 text-white text-xs font-bold rounded-full">
+                                      NEW
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Spark content */}
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 mt-1">
+                                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                                      <svg
+                                        className="w-4 h-4 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={3}
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                    </div>
+                                  </div>
+                                  <div className="flex-1">
+                                    <h5 className="font-bold text-gray-900 mb-1">
+                                      {spark.title}
+                                    </h5>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                      {spark.description}
+                                    </p>
+                                    <p className="text-xs text-green-700 font-medium">
+                                      {index === 0 && "You're on fire! Keep it up! 🔥"}
+                                      {index === 1 && "Building momentum! 💪"}
+                                      {index === 2 && "Great consistency! 🌟"}
+                                      {index > 2 && "Every step counts! ✨"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Next Steps CTA */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-6 animate-in zoom-in duration-700">
+                      <h4 className="text-lg font-bold text-blue-900 mb-2 text-center">What's Next?</h4>
+                      <p className="text-sm text-blue-800 text-center mb-4">
+                        Continue where you left off, or tackle your goal from a fresh angle!
+                      </p>
+                      <div className="flex gap-3">
+                        <Button
+                          variant="primary"
+                          onClick={() => {
+                            setShowProgress(false)
+                            setShowProgressCelebration(false)
+                            handleGenerateSparkForGoal()
+                          }}
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Continue Journey
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowProgress(false)
+                            setShowProgressCelebration(false)
+                            setSelectedGoal(null)
+                          }}
+                        >
+                          Back
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {generatedSpark && !showCompletion && !showProgress && (
           <div className="flex justify-center mb-6">
             <Button
               variant="ghost"
@@ -745,7 +1138,7 @@ export default function DashboardPage() {
                   <Card
                     key={goal.id}
                     className="hover:shadow-xl transition-shadow cursor-pointer h-full"
-                    onClick={() => handleSelectGoal(goal)}
+                    onClick={() => handleViewProgress(goal)}
                   >
                     <CardHeader>
                       <CardTitle className="text-xl">{goal.title}</CardTitle>
