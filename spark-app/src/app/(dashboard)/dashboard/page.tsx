@@ -395,9 +395,20 @@ export default function DashboardPage() {
   }
 
   const handleViewProgress = async (goal: Goal) => {
-    setShowProgress(true)
+    // Scroll to top smoothly for better UX
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    // Hide goals list immediately for smooth transition
     setShowGoals(false)
     setIsLoadingProgress(true)
+
+    // Set selectedGoal with current data immediately (will be updated with fresh data)
+    setSelectedGoal(goal)
+
+    // Small delay before showing progress view for smoother transition
+    setTimeout(() => {
+      setShowProgress(true)
+    }, 150)
 
     try {
       // Fetch the latest goal data to ensure spark count is up-to-date
@@ -406,9 +417,6 @@ export default function DashboardPage() {
 
       if (goalResponse.ok && goalData.goal) {
         setSelectedGoal(goalData.goal)
-      } else {
-        // Fallback to the passed goal if fetch fails
-        setSelectedGoal(goal)
       }
 
       const response = await fetch(`/api/goals/${goal.id}/completed-sparks`)
@@ -858,11 +866,11 @@ export default function DashboardPage() {
 
         {/* Progress View */}
         {showProgress && selectedGoal && (
-          <div className="mb-6 flex justify-center">
+          <div className="mb-6 flex justify-center animate-in fade-in duration-300">
             <Card className="w-full max-w-2xl">
               <CardContent className="pt-6">
                 {isLoadingProgress ? (
-                  <div className="flex justify-center py-12">
+                  <div className="flex justify-center py-12 animate-in fade-in duration-200">
                     <Spinner size="lg" />
                   </div>
                 ) : completedSparks.length === 0 ? (
@@ -1159,7 +1167,7 @@ export default function DashboardPage() {
         )}
 
         {showGoals && (
-          <>
+          <div className="animate-in fade-in duration-300">
             {goalsLoading ? (
               <div className="flex justify-center py-12">
                 <Spinner size="lg" />
@@ -1200,7 +1208,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>
