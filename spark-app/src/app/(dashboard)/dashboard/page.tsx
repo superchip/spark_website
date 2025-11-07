@@ -395,12 +395,22 @@ export default function DashboardPage() {
   }
 
   const handleViewProgress = async (goal: Goal) => {
-    setSelectedGoal(goal)
     setShowProgress(true)
     setShowGoals(false)
     setIsLoadingProgress(true)
 
     try {
+      // Fetch the latest goal data to ensure spark count is up-to-date
+      const goalResponse = await fetch(`/api/goals/${goal.id}`)
+      const goalData = await goalResponse.json()
+
+      if (goalResponse.ok && goalData.goal) {
+        setSelectedGoal(goalData.goal)
+      } else {
+        // Fallback to the passed goal if fetch fails
+        setSelectedGoal(goal)
+      }
+
       const response = await fetch(`/api/goals/${goal.id}/completed-sparks`)
       const data = await response.json()
 
@@ -419,13 +429,31 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching completed sparks:', error)
+      // Fallback to the passed goal if fetch fails
+      setSelectedGoal(goal)
     } finally {
       setIsLoadingProgress(false)
     }
   }
 
   const handleSelectGoal = async (goal: Goal) => {
-    setSelectedGoal(goal)
+    try {
+      // Fetch the latest goal data to ensure spark count is up-to-date
+      const goalResponse = await fetch(`/api/goals/${goal.id}`)
+      const goalData = await goalResponse.json()
+
+      if (goalResponse.ok && goalData.goal) {
+        setSelectedGoal(goalData.goal)
+      } else {
+        // Fallback to the passed goal if fetch fails
+        setSelectedGoal(goal)
+      }
+    } catch (error) {
+      console.error('Error fetching goal:', error)
+      // Fallback to the passed goal if fetch fails
+      setSelectedGoal(goal)
+    }
+
     setShowGoals(false)
     setGeneratedSpark(null)
     setCreatedGoalTitle('')
