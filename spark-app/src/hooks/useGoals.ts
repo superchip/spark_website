@@ -80,6 +80,27 @@ export function useGoals() {
     }
   }
 
+  const deleteGoal = async (id: string) => {
+    try {
+      const response = await fetch(`/api/goals/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete goal')
+      }
+
+      setGoals(goals.filter(goal => goal.id !== id))
+      return data
+    } catch (err: any) {
+      setError(err.message)
+      throw err
+    }
+  }
+
   const refreshGoals = () => {
     fetchGoals()
   }
@@ -89,6 +110,7 @@ export function useGoals() {
     isLoading,
     error,
     createGoal,
+    deleteGoal,
     refreshGoals,
   }
 }

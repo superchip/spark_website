@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Flame, LogOut, Sparkles, ArrowRight, Clock, ExternalLink, Plus, ChevronDown, ChevronUp } from 'lucide-react'
+import { Flame, LogOut, Sparkles, ArrowRight, Clock, ExternalLink, Plus, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { useGoals } from '@/hooks/useGoals'
 import { useUser } from '@/hooks/useUser'
 import { createClient } from '@/lib/supabase/client'
@@ -16,7 +16,7 @@ import confetti from 'canvas-confetti'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { goals, isLoading: goalsLoading, createGoal, refreshGoals } = useGoals()
+  const { goals, isLoading: goalsLoading, createGoal, deleteGoal, refreshGoals } = useGoals()
   const { user, isLoading: userLoading } = useUser()
   const [newGoalTitle, setNewGoalTitle] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -240,6 +240,28 @@ export default function DashboardPage() {
     setNewGoalTitle('')
     setSelectedGoal(null)
     setShowCompletion(false)
+  }
+
+  const handleDeleteGoal = async (goalId: string, e: React.MouseEvent) => {
+    // Prevent the card click event from firing
+    e.stopPropagation()
+
+    if (!confirm('Are you sure you want to delete this goal? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      await deleteGoal(goalId)
+      // If we're currently viewing this goal, clear the view
+      if (selectedGoal?.id === goalId) {
+        setSelectedGoal(null)
+        setGeneratedSpark(null)
+        setShowProgress(false)
+      }
+    } catch (error) {
+      console.error('Error deleting goal:', error)
+      alert('Failed to delete goal. Please try again.')
+    }
   }
 
   const handleSparkCompleted = async () => {
@@ -1185,11 +1207,21 @@ export default function DashboardPage() {
                 {goals.map((goal) => (
                   <Card
                     key={goal.id}
-                    className="hover:shadow-xl transition-shadow cursor-pointer h-full"
+                    className="hover:shadow-xl transition-shadow cursor-pointer h-full relative group"
                     onClick={() => handleViewProgress(goal)}
                   >
                     <CardHeader>
-                      <CardTitle className="text-xl">{goal.title}</CardTitle>
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-xl flex-1">{goal.title}</CardTitle>
+                        <button
+                          onClick={(e) => handleDeleteGoal(goal.id, e)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-50 rounded-md text-red-600 hover:text-red-700"
+                          aria-label="Delete goal"
+                          title="Delete goal"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
